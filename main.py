@@ -1,6 +1,24 @@
 import pygame
 from fighter import Fighter
-from weapons import TitanGauntlet, GenesisForge, BreezeBlaster, BeastmastersWhip, GridironGauntlet, HooperGauntlets, VoltEdgeBlades, DreamWeaverBlade, ThunderstrikeGauntlet, ChuckleChucks, LaughingLasso, HeartStringBow, TrickstersBaton, SwordOfHydration, YoYoOfDoom, RegalScepter, MindwarpStaff,
+from combo import ComboTracker  # 💥 Combo counter + damage system
+# === Weapon Imports ===
+from weapons.BeastmastersWhip import BeastmastersWhip
+from weapons.BreezeBlaster import BreezeBlaster
+from weapons.ChuckleChucks import ChuckleChucks
+from weapons.DeathString import DeathString
+from weapons.DreamWeaverBlade import DreamweaverBlade
+from weapons.GenesisForge import GenesisForge
+from weapons.GridironGauntlet import GridironGauntlet
+from weapons.HeartStringBow import HeartstringBow
+from weapons.LaughingLasso import LaughingLasso
+from weapons.MindwarpStaff import MindWarpStaff
+from weapons.RegalScepter import RegalScepter
+from weapons.SlamDunkGauntlets import SlamDunkGauntlets
+from weapons.SwordOfHydration import SwordOfHydration
+from weapons.ThunderstrikeGauntlet import ThunderstrikeGauntlet
+from weapons.TitanGauntlet import TitanGauntlet
+from weapons.TrickstersBaton import TrickstersBaton
+from weapons.VoltEdgeBlades import VoltEdgeBlades
 
 # === Ability Imports ===
 from abilities.rally import CommandersRally
@@ -83,32 +101,40 @@ from abilities.GiggleOne import GiggleOne
 from abilities.GiggleTwo import GiggleTwo
 from abilities.Mock import Mock
 
-# === Game Setup ===
+fighter_1 = None
+fighter_2 = None
+dummy = None
+combo_tracker = None
+background = None
+game_state = None
+winner = None
+
+
+# === Pygame Initialization ===
 pygame.init()
 WIDTH, HEIGHT = 800, 400
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Hectic Homies")
 clock = pygame.time.Clock()
 
-# === Load Images ===
-iron_image = pygame.image.load("assets/iron_commander.JPG")
-creator_image = pygame.image.load("assets/the_creator.JPG")
-hydrator_image = pygame.image.load("assets/the_hydrator.JPG")
-yoyoer_image = pygame.image.load("assets/the_yoyoer.JPG")
-shortking_image = pygame.image.load("assets/the_short_king.JPG")
-brainrotter_image = pygame.image.load("assets/the_brain_rotter.JPG")
-hooper_image = pygame.image.load("assets/the_hooper.JPG")
-cupid_image = pygame.image.load("assets/cupid.JPG")
-jester_image = pygame.image.load("assets/the_jester.JPG")
-chillguy_image = pygame.image.load("assets/the_chill_guy.JPG")
-tamer_image = pygame.image.load("assets/the_tamer.JPG")
-lightning_image = pygame.image.load("assets/the_lightning.JPG")
-shutdown_image = pygame.image.load("assets/shutdown_specialist.JPG")
-thunder_image = pygame.image.load("assets/the_thunder.JPG")
-sleeper_image = pygame.image.load("assets/the_sleeper.JPG")
-giggle_image = pygame.image.load("assets/giggle_one_two.JPG")
-
+# === Load Title & Character Images ===
 title_bg = pygame.image.load("assets/titlescreen.JPG")
+iron_image = pygame.image.load("assets/iron_commander_no_slogan.JPG")
+creator_image = pygame.image.load("assets/creator_no_slogan.JPG")
+hydrator_image = pygame.image.load("assets/hydrator_no_slogan.JPG")
+yoyoer_image = pygame.image.load("assets/yoyoer_no_slogan.JPG")
+shortking_image = pygame.image.load("assets/short_king_no_slogan.JPG")
+brainrotter_image = pygame.image.load("assets/brain_rotter_no_slogan.JPG")
+hooper_image = pygame.image.load("assets/hooper_no_slogan.JPG")
+cupid_image = pygame.image.load("assets/cupid_no_slogan.JPG")
+jester_image = pygame.image.load("assets/jester_no_slogan.JPG")
+chillguy_image = pygame.image.load("assets/chill_guy.JPG")
+tamer_image = pygame.image.load("assets/tamer_no_slogan.JPG")
+lightning_image = pygame.image.load("assets/lightning_and_thunder_no_slogan.JPG")
+shutdown_image = pygame.image.load("assets/shutdown_specialist_no_slogan.JPG")
+thunder_image = pygame.image.load("assets/lightning_and_thunder_no_slogan.JPG")
+sleeper_image = pygame.image.load("assets/sleeper_no_slogan.JPG")
+giggle_image = pygame.image.load("assets/giggle_1_2_no_slogan.JPG")
 
 # === Load Maps ===
 map_images = {
@@ -120,27 +146,27 @@ map_images = {
     "Rot Zone": pygame.image.load("Maps/brain_rotter_map.png"),
     "Throne Room": pygame.image.load("Maps/short_king_map.png"),
     "Yo-Yo Arena": pygame.image.load("Maps/yo-yoer_map.png"),
-    "Laugh Track Live": pygame.image.load("Maps/the_jester_map.png"),
-    "Chill Zone": pygame.image.load("Maps/the_chill_guy_map.png"),
-    "Wildlands": pygame.image.load("Maps/the_tamer_map.png"),
-    "Voltage Vault": pygame.image.load("Maps/the_lightning_map.png"),
+    "Laugh Track Live": pygame.image.load("Maps/jester_map.png"),
+    "Chill Zone": pygame.image.load("Maps/chill_guy_map.png"),
+    "Wildlands": pygame.image.load("Maps/tamer_map.png"),
+    "Voltage Vault": pygame.image.load("Maps/lightning_and_thunder_map.png"),
     "The End Zone": pygame.image.load("Maps/shutdown_specialist_map.png"),
-    "Stormfront Arena": pygame.image.load("Maps/the_thunder_map.png"),
-    "Dreamscape": pygame.image.load("Maps/the_sleeper_map.png"),
-    "Clown Tower": pygame.image.load("Maps/giggle_one_two_map.png")
+    "Stormfront Arena": pygame.image.load("Maps/lightning_and_thunder_map.png"),
+    "Dreamscape": pygame.image.load("Maps/sleeper_map.png"),
+    "Clown Tower": pygame.image.load("Maps/giggle_1_and_2_map.png")
 }
 
-# === Sounds ===
+# === Load Sounds ===
 ko_sound = pygame.mixer.Sound("assets/sounds/ko_sound.wav")
 pygame.mixer.music.load("assets/sounds/menu_theme.mp3")
 pygame.mixer.music.play(-1)
-# === Fighter Roster ===
+
 fighter_roster = [
     {
         "name": "Iron Commander",
         "image": iron_image,
         "slogan": "Tactical Might Unleashed.",
-        "weapon": "Titan Gauntlet",
+        "weapon": TitanGauntlet(),
         "flip": False,
         "abilities": {
             "F": CommandersRally(),
@@ -153,7 +179,7 @@ fighter_roster = [
         "name": "The Creator",
         "image": creator_image,
         "slogan": "Imagination Meets Power.",
-        "weapon": "Genesis Forge",
+        "weapon": GenesisForge(),
         "flip": False,
         "abilities": {
             "F": ArtisticExpression(),
@@ -166,7 +192,7 @@ fighter_roster = [
         "name": "The Hydrator",
         "image": hydrator_image,
         "slogan": "Quench the Chaos.",
-        "weapon": "Sword of Hydration",
+        "weapon": SwordOfHydration(),
         "flip": False,
         "abilities": {
             "F": HydrationBuff(),
@@ -179,7 +205,7 @@ fighter_roster = [
         "name": "The Yo-Yoer",
         "image": yoyoer_image,
         "slogan": "Spin into action with flavor, speed, and smash!",
-        "weapon": "Yo-Yo of Doom",
+        "weapon": DeathString(),
         "flip": False,
         "abilities": {
             "F": Godspeed(),
@@ -192,7 +218,7 @@ fighter_roster = [
         "name": "The Short King",
         "image": shortking_image,
         "slogan": "Small stature, mighty impact.",
-        "weapon": "Regal Scepter",
+        "weapon": RegalScepter(),
         "flip": False,
         "abilities": {
             "F": CrownTheft(),
@@ -205,7 +231,7 @@ fighter_roster = [
         "name": "The Brain Rotter",
         "image": brainrotter_image,
         "slogan": "Flush, pierce, vanish, and explode!",
-        "weapon": "Mindwarp Staff",
+        "weapon": MindWarpStaff(),
         "flip": False,
         "abilities": {
             "F": ToiletTrap(),
@@ -218,7 +244,7 @@ fighter_roster = [
         "name": "The Hooper",
         "image": hooper_image,
         "slogan": "Dribble, dunk, and dominate.",
-        "weapon": "Slam Dunk Gauntlets",
+        "weapon": SlamDunkGauntlets(),
         "flip": False,
         "abilities": {
             "F": Posterize(),
@@ -231,7 +257,7 @@ fighter_roster = [
         "name": "Cupid",
         "image": cupid_image,
         "slogan": "Aim for love… striking hearts and uniting souls.",
-        "weapon": "Heartstring Bow",
+        "weapon": HeartstringBow(),
         "flip": False,
         "abilities": {
             "F": ArrowsOfLove(),
@@ -244,7 +270,7 @@ fighter_roster = [
         "name": "The Jester",
         "image": jester_image,
         "slogan": "Chaos is comedy. Comedy is pain.",
-        "weapon": "Trickster’s Baton",
+        "weapon": TrickstersBaton(),
         "flip": False,
         "abilities": {
             "F": TheYapping(),
@@ -257,7 +283,7 @@ fighter_roster = [
         "name": "The Chill Guy",
         "image": chillguy_image,
         "slogan": "Too cool to care. Too dangerous to doubt.",
-        "weapon": "Breeze Blaster",
+        "weapon": BreezeBlaster(),
         "flip": False,
         "abilities": {
             "F": TheEdit(),
@@ -270,7 +296,7 @@ fighter_roster = [
         "name": "The Tamer",
         "image": tamer_image,
         "slogan": "Nature answers to none... except me.",
-        "weapon": "Beastmaster’s Whip",
+        "weapon": BeastmastersWhip(),
         "flip": False,
         "abilities": {
             "F": Remy(),
@@ -283,7 +309,7 @@ fighter_roster = [
         "name": "The Lightning",
         "image": lightning_image,
         "slogan": "Strike fast. Confuse faster.",
-        "weapon": "Volt Edge Blades",
+        "weapon": VoltEdgeBlades(),
         "flip": False,
         "abilities": {
             "F": LightningStrike(),
@@ -296,7 +322,7 @@ fighter_roster = [
         "name": "The Shutdown Specialist",
         "image": shutdown_image,
         "slogan": "Defense wins games. I win all of them.",
-        "weapon": "Gridiron Gauntlets",
+        "weapon": GridironGauntlet(),
         "flip": False,
         "abilities": {
             "F": ChaseDown(),
@@ -309,7 +335,7 @@ fighter_roster = [
         "name": "The Thunder",
         "image": thunder_image,
         "slogan": "When it rains, I break the sky.",
-        "weapon": "Thunderstrike Gauntlet",
+        "weapon": ThunderstrikeGauntlet(),
         "flip": False,
         "abilities": {
             "F": Thunder(),
@@ -322,7 +348,7 @@ fighter_roster = [
         "name": "The Sleeper",
         "image": sleeper_image,
         "slogan": "Conquer the dreamscape: Rest, Rise, and Rule.",
-        "weapon": "Dreamweaver Blade",
+        "weapon": DreamweaverBlade(),
         "flip": False,
         "abilities": {
             "F": Hibernation(),
@@ -335,7 +361,7 @@ fighter_roster = [
         "name": "Giggle One & Two",
         "image": giggle_image,
         "slogan": "Double the fun. Triple the chaos.",
-        "weapon": "Chuckle Chucks + Laughing Lasso",
+        "weapon": (ChuckleChucks(), LaughingLasso()),
         "flip": False,
         "abilities": {
             "F": Giggle(),
@@ -345,26 +371,50 @@ fighter_roster = [
         }
     }
 ]
+# === Mode Selector ===
+def select_mode():
+    modes = ["Versus", "Training"]
+    index = 0
+    font = pygame.font.Font(None, 60)
+
+    while True:
+        screen.fill((0, 0, 0))
+        title = font.render(f"Select Mode: {modes[index]}", True, (255, 255, 255))
+        prompt = font.render("← → to Choose   ENTER to Confirm", True, (200, 200, 200))
+        screen.blit(title, (240, 150))
+        screen.blit(prompt, (180, 250))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    index = (index - 1) % len(modes)
+                elif event.key == pygame.K_RIGHT:
+                    index = (index + 1) % len(modes)
+                elif event.key == pygame.K_RETURN:
+                    return modes[index]
+
+        pygame.display.update()
+        clock.tick(60)
 
 # === Title Screen ===
 def title_screen():
     font = pygame.font.Font(None, 80)
     sub_font = pygame.font.Font(None, 40)
-    running = True
 
-    while running:
+    while True:
         screen.blit(title_bg, (0, 0))
-        title_text = font.render("HECTIC HOMIES", True, (255, 255, 255))
-        prompt_text = sub_font.render("Press ENTER to Begin", True, (200, 200, 200))
-        screen.blit(title_text, (220, 100))
-        screen.blit(prompt_text, (260, 250))
+        screen.blit(font.render("HECTIC HOMIES", True, (255, 255, 255)), (220, 100))
+        screen.blit(sub_font.render("Press ENTER to Begin", True, (200, 200, 200)), (260, 250))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                running = False
+                break
 
         pygame.display.update()
         clock.tick(60)
@@ -374,25 +424,20 @@ def select_character(player_label):
     index = 0
     font = pygame.font.Font(None, 40)
     big_font = pygame.font.Font(None, 60)
-    selecting = True
 
-    while selecting:
-        screen.fill((20, 20, 20))
+    while True:
         fighter = fighter_roster[index]
+        screen.fill((20, 20, 20))
         screen.blit(fighter["image"], (300, 100))
 
-        name_text = big_font.render(f"{player_label}: {fighter['name']}", True, (255, 255, 255))
-        slogan_text = font.render(f'"{fighter["slogan"]}"', True, (200, 200, 200))
-        prompt_text = font.render("← → to Choose    ENTER to Confirm", True, (150, 150, 150))
-        screen.blit(name_text, (240, 30))
-        screen.blit(slogan_text, (250, 310))
-        screen.blit(prompt_text, (200, 370))
+        screen.blit(big_font.render(f"{player_label}: {fighter['name']}", True, (255, 255, 255)), (240, 30))
+        screen.blit(font.render(f'"{fighter["slogan"]}"', True, (200, 200, 200)), (250, 310))
+        screen.blit(font.render("← → to Choose    ENTER to Confirm", True, (150, 150, 150)), (200, 370))
 
-        ab_y = 330
+        y = 330
         for key, ability in fighter["abilities"].items():
-            ab_text = font.render(f"{key}: {ability.name}", True, (180, 180, 180))
-            screen.blit(ab_text, (250, ab_y))
-            ab_y += 25
+            screen.blit(font.render(f"{key}: {ability.name}", True, (180, 180, 180)), (250, y))
+            y += 25
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -404,21 +449,18 @@ def select_character(player_label):
                 elif event.key == pygame.K_RIGHT:
                     index = (index + 1) % len(fighter_roster)
                 elif event.key == pygame.K_RETURN:
-                    selecting = False
+                    return fighter_roster[index]
 
         pygame.display.update()
         clock.tick(60)
-
-    return fighter_roster[index]
 
 # === Map Selection ===
 def select_map():
     maps = list(map_images.keys())
     index = 0
     font = pygame.font.Font(None, 60)
-    selecting = True
 
-    while selecting:
+    while True:
         screen.fill((15, 15, 15))
         title_text = font.render(f"Select Stage: {maps[index]}", True, (255, 255, 255))
         prompt_text = font.render("← → to Choose   ENTER to Confirm", True, (200, 200, 200))
@@ -435,36 +477,59 @@ def select_map():
                 elif event.key == pygame.K_RIGHT:
                     index = (index + 1) % len(maps)
                 elif event.key == pygame.K_RETURN:
-                    selecting = False
+                    return map_images[maps[index]]
 
         pygame.display.update()
         clock.tick(60)
-
-    return map_images[maps[index]]
-
-# === Game Start ===
+# === Game Start Flow ===
 title_screen()
-p1 = select_character("Player 1")
-p2 = select_character("Player 2")
-background = select_map()
+chosen_mode = select_mode()
 
-fighter_1 = Fighter(100, 300, p1["name"], p1["flip"], 1, p1["abilities"])
-fighter_2 = Fighter(600, 300, p2["name"], True, 2, p2["abilities"])
+# === Mode Branching ===
+if chosen_mode == "Versus":
+    p1 = select_character("Player 1")
+    p2 = select_character("Player 2")
+    background = select_map()
 
-game_state = "fight"
-winner = None
+    fighter_1 = Fighter(100, 300, p1["name"], p1["flip"], 1, p1["abilities"])
+    fighter_1.combo_tracker = combo_tracker
+    fighter_2 = Fighter(600, 300, p2["name"], True, 2, p2["abilities"])
+    fighter_2.combo_tracker = combo_tracker
+
+    combo_tracker = ComboTracker()
+    game_state = "fight"
+    winner = None
+
+elif chosen_mode == "Training":
+    trainee = select_character("Training Player")
+    background = select_map()
+
+    fighter_1 = Fighter(200, 300, trainee["name"], trainee["flip"], 1, trainee["abilities"])
+    fighter_1.combo_tracker = combo_tracker
+    dummy = Fighter(500, 300, "Training Dummy", False, 0, {})
+    dummy.health = 9999
+    dummy.weapon_type = "melee"
+
+    combo_tracker = ComboTracker()
+    game_state = "training"
+    winner = None
+
+# === Begin Main Loop Flag ===
 run = True
-
+WIDTH, HEIGHT = screen.get_size()
 # === Main Game Loop ===
 while run:
     clock.tick(60)
-    screen.blit(background, (0, 0))
 
-    if game_state == "fight":
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
+    if background:
+        screen.blit(background, (0, 0))
 
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+
+    # === Versus Mode ===
+    if game_state == "fight" and fighter_1 and fighter_2 and combo_tracker:
         fighter_1.move(fighter_2)
         fighter_2.move(fighter_1)
 
@@ -477,24 +542,42 @@ while run:
         pygame.draw.rect(screen, (255, 0, 0), (50, 50, fighter_1.health * 2, 20))
         pygame.draw.rect(screen, (255, 0, 0), (WIDTH - 250, 50, fighter_2.health * 2, 20))
 
+        combo_tracker.update()
+        combo_tracker.draw(screen, WIDTH)
+
         if fighter_1.health <= 0:
             winner = fighter_2.name
             ko_sound.play()
+            combo_tracker.reset()
             game_state = "end"
         elif fighter_2.health <= 0:
             winner = fighter_1.name
             ko_sound.play()
+            combo_tracker.reset()
             game_state = "end"
 
+    # === Training Mode ===
+    elif game_state == "training" and fighter_1 and dummy and combo_tracker:
+        fighter_1.move(dummy)
+        fighter_1.update()
+        dummy.update()
+
+        fighter_1.draw(screen)
+        dummy.draw(screen)
+
+        pygame.draw.rect(screen, (255, 0, 0), (50, 50, fighter_1.health * 2, 20))
+
+        combo_tracker.update()
+        combo_tracker.draw(screen, WIDTH)
+
+    # === KO Screen ===
     elif game_state == "end":
         screen.fill((0, 0, 0))
         font = pygame.font.Font(None, 80)
 
-        for alpha in range(0, 255, 10):
+        if winner:
             win_text = font.render(f"{winner} Wins!", True, (255, 255, 0))
             screen.blit(win_text, (250, 150))
-            pygame.display.update()
-            pygame.time.delay(20)
 
         prompt_text = font.render("Press R to Restart or Q to Quit", True, (200, 200, 200))
         screen.blit(prompt_text, (180, 250))
@@ -508,11 +591,18 @@ while run:
                     run = False
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:
-                        fighter_1.health = 100
-                        fighter_2.health = 100
-                        fighter_1.rect.x = 100
-                        fighter_2.rect.x = 600
-                        game_state = "fight"
+                        if fighter_1:
+                            fighter_1.health = 100
+                            fighter_1.rect.x = 100 if chosen_mode == "Versus" else 200
+                        if chosen_mode == "Versus" and fighter_2:
+                            fighter_2.health = 100
+                            fighter_2.rect.x = 600
+                        elif dummy:
+                            dummy.health = 9999
+                            dummy.rect.x = 500
+                        if combo_tracker:
+                            combo_tracker.reset()
+                        game_state = chosen_mode.lower()
                         waiting = False
                     elif event.key == pygame.K_q:
                         waiting = False
@@ -521,4 +611,3 @@ while run:
     pygame.display.flip()
 
 pygame.quit()
-
